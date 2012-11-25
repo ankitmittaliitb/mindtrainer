@@ -179,6 +179,17 @@ class WordList():
 
 		return True
 
+	def LoadCSV(self, path):
+		# Is it possible to test if it's valid CSV?
+		csvfile = open(path, 'rb')
+		csvobject = csv.reader(csvfile, delimiter='\t', quotechar='"')
+
+		self.words = []
+		for row in csvobject:
+			self.words.append((row[0], row[1]))
+
+		return True
+
 	def NewWords(self, frame, num_choices):
 
 		# Word to train

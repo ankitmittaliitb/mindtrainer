@@ -9,6 +9,7 @@ import os
 import wx
 import random
 import xml.dom.minidom
+import csv
 
 class TrainingFrame(wx.Frame):
 	def __init__(self, parent, ID, title, pos=wx.DefaultPosition,
@@ -70,6 +71,7 @@ class TrainingFrame(wx.Frame):
 
 	def OnOpen(self, event):
 		wildcard = 	"XML word list (*.xhtml)|*.xhtml|" \
+					"CSV word list (*.csv)|*.csv|" \
 					"All files (*.*)|*.*|"
 
 		dlg = wx.FileDialog(
@@ -142,10 +144,25 @@ class WordList():
 	def __init__(self, path):
 		random.seed()
 
-		self.LoadXML(path)
+		# Try as XML first, then as CSV, otherwise (throw error?)
+		if(self.LoadXML(path)):
+			return
+		if(self.LoadCSV(path)):
+			return
+		
+		# Throw error?
 
+
+	# Loads XML file, returns True on success, False if not valid XML file
 	def LoadXML(self, path):
-		doc = xml.dom.minidom.parse(path)
+		# Check if it's valid XML
+
+		try:
+			doc = xml.dom.minidom.parse(path)
+		except (IOError, xml.parsers.expat.ExpatError):
+			return False
+
+
 		tables = doc.getElementsByTagName("table")
 		table = tables[0]
 		# table.childNodes[i].childNodes[j].childNodes[0].childNodes[0].wholeText
@@ -159,6 +176,8 @@ class WordList():
 			word1 = word1.replace("&#39;", "'")
 			word2 = word2.replace("&#39;", "'")
 			self.words.append((word1, word2))
+
+		return True
 
 	def NewWords(self, frame, num_choices):
 

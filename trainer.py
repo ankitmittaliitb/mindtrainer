@@ -88,8 +88,8 @@ class TrainingFrame(wx.Frame):
 		self.Layout()
 
 	def StartSpelling(self):
-#		self.spelling.SetWordList(self.words)
-#		self.spelling.PickNewWord()
+		self.spelling.SetWordList(self.words)
+		self.spelling.PickNewWord()
 
 		self.trainerpanel.Hide()
 		self.spelling.Show()
@@ -140,11 +140,59 @@ class SpellingPanel(wx.Panel):
 		wx.Panel.__init__(self, parent, ID)
 
 		self.text_word = wx.StaticText(self, label="word", pos=(40,30))
+		self.correct_text_word = wx.StaticText(self, label="", pos=(40,60))
 		stopbutton = wx.Button(self, label="Stop", size=(100,30), pos=(280, 20))
+		self.spelling_box = wx.TextCtrl(self, wx.ID_ANY, size=(200, 30), pos=(30,100))
+
 		self.Bind(wx.EVT_BUTTON, self.OnStop, stopbutton)
+		self.Bind(wx.EVT_TEXT, self.OnText, self.spelling_box)
+		self.spelling_box.Bind(wx.EVT_CHAR, self.OnChar)
+
+	def SetWordList(self, word_list):
+		self.word_list = word_list
+
+	def PickNewWord(self):
+		self.checked = False
+		new_word = self.word_list.NewWord()
+		self.correct_text_word.SetLabel('')
+		self.spelling_box.SetValue('')
+		self.spelling_box.SetBackgroundColour("WHITE")
+		self.text_word.SetLabel(new_word[1])
+		self.word_to_spell = new_word[0].decode('utf8')
 
 	def OnStop(self, event):
 		self.GetParent().Stop()
+
+	def OnText(self, event):
+		if(self.checked == True):
+			text = self.spelling_box.GetValue()
+			if(not isinstance(text, unicode)):
+				print "Error, input is not unicode"
+			if(not isinstance(self.word_to_spell, unicode)):
+				print "Error, word_to_spell is not unicode (%s is object %s)" % (self.word_to_spell, type(self.word_to_spell))
+			
+			if(text == u''):
+				self.spelling_box.SetBackgroundColour("WHITE")
+			elif(self.word_to_spell.startswith(text)):
+				self.spelling_box.SetBackgroundColour("GREEN")
+			else:
+				self.spelling_box.SetBackgroundColour("RED")
+
+	def OnChar(self, event):
+		if(event.GetKeyCode() == 13):
+			if(not self.checked):
+				self.checked = True
+				if(self.spelling_box.GetValue() == self.word_to_spell):
+					self.spelling_box.SetBackgroundColour("GREEN")
+				else:
+					self.spelling_box.SetValue('')
+					self.spelling_box.SetBackgroundColour("RED")
+					self.correct_text_word.SetLabel(self.word_to_spell)
+			else:
+				text = self.spelling_box.GetValue()
+				if(text == u'' or text == self.word_to_spell):
+					self.PickNewWord()
+		event.Skip()
 
 class MultipleChoicePanel(wx.Panel):
 	def __init__(self, parent, ID):
@@ -284,6 +332,10 @@ class WordList():
 			self.words.append((row[0], row[1]))
 
 		return True
+
+	def NewWord(self):
+		wordindex = random.randint(0, len(self.words)-1)
+		return (self.words[wordindex][0],self.words[wordindex][1])
 
 	def NewMultipleChoiceWords(self, num_choices):
 

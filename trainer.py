@@ -23,10 +23,13 @@ class TrainingFrame(wx.Frame):
 
 		self.multiplechoice = MultipleChoicePanel(self, wx.ID_ANY)
 		self.multiplechoice.Hide()
+		self.spelling = SpellingPanel(self, wx.ID_ANY)
+		self.spelling.Hide()
 
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		self.sizer.Add(self.trainerpanel, 1, wx.EXPAND)
 		self.sizer.Add(self.multiplechoice, 1, wx.EXPAND)
+		self.sizer.Add(self.spelling, 1, wx.EXPAND)
 		self.SetSizer(self.sizer)
 
 		# Menu
@@ -73,6 +76,7 @@ class TrainingFrame(wx.Frame):
 	def Stop(self):
 		self.trainerpanel.Show()
 		self.multiplechoice.Hide()
+		self.spelling.Hide()
 		self.Layout()
 
 	def StartMultipleChoice(self):
@@ -81,6 +85,14 @@ class TrainingFrame(wx.Frame):
 
 		self.trainerpanel.Hide()
 		self.multiplechoice.Show()
+		self.Layout()
+
+	def StartSpelling(self):
+#		self.spelling.SetWordList(self.words)
+#		self.spelling.PickNewWord()
+
+		self.trainerpanel.Hide()
+		self.spelling.Show()
 		self.Layout()
 
 	def OnClose(self, event):
@@ -98,6 +110,7 @@ class TrainerPanel(wx.Panel):
 		button_add = wx.Button(self, label="Add word list", size=(150, 40), pos=(250, 70))
 		button_rm = wx.Button(self, label="Remove word list", size=(150, 40), pos=(250, 130))
 		button_mult_choice = wx.Button(self, label="Multiple choice", size=(150, 40), pos=(250, 190))
+		button_spelling = wx.Button(self, label="Spelling", size=(150, 40), pos=(250, 250))
 
 		cfg = wx.Config(APP_NAME)
 
@@ -106,6 +119,7 @@ class TrainerPanel(wx.Panel):
 			self.wordlistlistbox.Append(os.path.basename(wl))
 
 		self.Bind(wx.EVT_BUTTON, self.OnMultipleChoice, button_mult_choice)
+		self.Bind(wx.EVT_BUTTON, self.OnSpelling, button_spelling)
 
 	def OnMultipleChoice(self, event):
 		wordlist = self.wordlists[self.wordlistlistbox.GetSelection()]
@@ -113,6 +127,24 @@ class TrainerPanel(wx.Panel):
 			return
 		self.GetParent().LoadWordList(wordlist)
 		self.GetParent().StartMultipleChoice()
+
+	def OnSpelling(self, event):
+		wordlist = self.wordlists[self.wordlistlistbox.GetSelection()]
+		if(wordlist == wx.NOT_FOUND):
+			return
+		self.GetParent().LoadWordList(wordlist)
+		self.GetParent().StartSpelling()
+
+class SpellingPanel(wx.Panel):
+	def __init__(self, parent, ID):
+		wx.Panel.__init__(self, parent, ID)
+
+		self.text_word = wx.StaticText(self, label="word", pos=(40,30))
+		stopbutton = wx.Button(self, label="Stop", size=(100,30), pos=(280, 20))
+		self.Bind(wx.EVT_BUTTON, self.OnStop, stopbutton)
+
+	def OnStop(self, event):
+		self.GetParent().Stop()
 
 class MultipleChoicePanel(wx.Panel):
 	def __init__(self, parent, ID):

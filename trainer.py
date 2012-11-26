@@ -16,7 +16,7 @@ class TrainingFrame(wx.Frame):
 				size = wx.DefaultSize, style = wx.DEFAULT_FRAME_STYLE):
 
 		wx.Frame.__init__(self, parent, ID, title, pos, size, style)
-		panel = wx.Panel(self, -1)
+		panel = wx.Panel(self, wx.ID_ANY)
 
 		# Menu
 		filemenu = wx.Menu()

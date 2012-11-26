@@ -16,13 +16,14 @@ class TrainingFrame(wx.Frame):
 				size = wx.DefaultSize, style = wx.DEFAULT_FRAME_STYLE):
 
 		wx.Frame.__init__(self, parent, ID, title, pos, size, style)
-		self.main_panel = wx.Panel(self, wx.ID_ANY)
+
+		self.trainerpanel = TrainerPanel(self, wx.ID_ANY)
 
 		self.multiplechoice = MultipleChoicePanel(self, wx.ID_ANY)
 		self.multiplechoice.Hide()
 
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
-		self.sizer.Add(self.main_panel, 1, wx.EXPAND)
+		self.sizer.Add(self.trainerpanel, 1, wx.EXPAND)
 		self.sizer.Add(self.multiplechoice, 1, wx.EXPAND)
 		self.SetSizer(self.sizer)
 
@@ -36,10 +37,6 @@ class TrainingFrame(wx.Frame):
 		menuBar.Append(filemenu, "&File")
 
 		self.SetMenuBar(menuBar)
-
-		# Text and buttons
-		
-		self.text_word = wx.StaticText(self.main_panel, label="Choose a word list", pos=(40,30))
 
 		self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
 		self.Bind(wx.EVT_MENU, self.OnClose, exitmenuitem)
@@ -72,7 +69,7 @@ class TrainingFrame(wx.Frame):
 		self.multiplechoice.SetWordList(self.words)
 		self.multiplechoice.PickNewWords()
 
-		self.main_panel.Hide()
+		self.trainerpanel.Hide()
 		self.multiplechoice.Show()
 		self.Layout()
 
@@ -81,6 +78,12 @@ class TrainingFrame(wx.Frame):
 
 	def OnCloseWindow(self, event):
 		self.Destroy()
+
+class TrainerPanel(wx.Panel):
+	def __init__(self, parent, ID):
+		wx.Panel.__init__(self, parent, ID)
+
+		self.text_word = wx.StaticText(self, label="Choose a word list", pos=(40,30))
 
 class MultipleChoicePanel(wx.Panel):
 	def __init__(self, parent, ID):

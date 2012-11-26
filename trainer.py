@@ -11,6 +11,8 @@ import random
 import xml.dom.minidom
 import csv
 
+APP_NAME = 'memtrainer'
+
 class TrainingFrame(wx.Frame):
 	def __init__(self, parent, ID, title, pos=wx.DefaultPosition,
 				size = wx.DefaultSize, style = wx.DEFAULT_FRAME_STYLE):
@@ -65,7 +67,15 @@ class TrainingFrame(wx.Frame):
 
 		self.words = WordList(path)
 
-		# Only multiple choice for now
+	def LoadWordList(self, path):
+		self.words = WordList(path)
+
+	def Stop(self):
+		self.trainerpanel.Show()
+		self.multiplechoice.Hide()
+		self.Layout()
+
+	def StartMultipleChoice(self):
 		self.multiplechoice.SetWordList(self.words)
 		self.multiplechoice.PickNewWords()
 
@@ -84,12 +94,33 @@ class TrainerPanel(wx.Panel):
 		wx.Panel.__init__(self, parent, ID)
 
 		self.text_word = wx.StaticText(self, label="Choose a word list", pos=(40,30))
+		self.wordlistlistbox = wx.ListBox(self, pos=(40,70), size=(200,200), style=wx.LB_SINGLE)
+		button_add = wx.Button(self, label="Add word list", size=(150, 40), pos=(250, 70))
+		button_rm = wx.Button(self, label="Remove word list", size=(150, 40), pos=(250, 130))
+		button_mult_choice = wx.Button(self, label="Multiple choice", size=(150, 40), pos=(250, 190))
+
+		cfg = wx.Config(APP_NAME)
+
+		self.wordlists = cfg.Read('wordlists').split('\t')
+		for wl in self.wordlists:
+			self.wordlistlistbox.Append(os.path.basename(wl))
+
+		self.Bind(wx.EVT_BUTTON, self.OnMultipleChoice, button_mult_choice)
+
+	def OnMultipleChoice(self, event):
+		wordlist = self.wordlists[self.wordlistlistbox.GetSelection()]
+		if(wordlist == wx.NOT_FOUND):
+			return
+		self.GetParent().LoadWordList(wordlist)
+		self.GetParent().StartMultipleChoice()
 
 class MultipleChoicePanel(wx.Panel):
 	def __init__(self, parent, ID):
 		wx.Panel.__init__(self, parent, ID)
 
 		self.text_word = wx.StaticText(self, label="word", pos=(40,30))
+		stopbutton = wx.Button(self, label="Stop", size=(100,30), pos=(280, 20))
+		self.Bind(wx.EVT_BUTTON, self.OnStop, stopbutton)
 
 		self.buttonchoices = []
 		self.buttonchoices.append(wx.Button(self, label="choice1", size=(250,40), pos=(20,70)))
@@ -129,6 +160,9 @@ class MultipleChoicePanel(wx.Panel):
 			self.buttonchoices[i].SetLabel(choices[i])
 			self.buttonchoices[i].SetBackgroundColour("WHITE")
 			self.buttonchoices[i].SetForegroundColour("BLACK")
+
+	def OnStop(self, event):
+		self.GetParent().Stop()
 
 	def ChoiceButton(self, number):
 

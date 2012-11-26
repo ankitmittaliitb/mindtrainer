@@ -16,7 +16,15 @@ class TrainingFrame(wx.Frame):
 				size = wx.DefaultSize, style = wx.DEFAULT_FRAME_STYLE):
 
 		wx.Frame.__init__(self, parent, ID, title, pos, size, style)
-		panel = wx.Panel(self, wx.ID_ANY)
+		self.main_panel = wx.Panel(self, wx.ID_ANY)
+
+		self.multiplechoice = MultipleChoicePanel(self, wx.ID_ANY)
+		self.multiplechoice.Hide()
+
+		self.sizer = wx.BoxSizer(wx.VERTICAL)
+		self.sizer.Add(self.main_panel, 1, wx.EXPAND)
+		self.sizer.Add(self.multiplechoice, 1, wx.EXPAND)
+		self.SetSizer(self.sizer)
 
 		# Menu
 		filemenu = wx.Menu()
@@ -31,43 +39,13 @@ class TrainingFrame(wx.Frame):
 
 		# Text and buttons
 		
-		self.text_word = wx.StaticText(panel, label="Choose a word list", pos=(40,30))
+		self.text_word = wx.StaticText(self.main_panel, label="Choose a word list", pos=(40,30))
 
-		self.buttonchoices = []
-		self.buttonchoices.append(wx.Button(panel, label="choise1", size=(250,40), pos=(20,70)))
-		self.buttonchoices.append(wx.Button(panel, label="choise2", size=(250,40), pos=(20,120)))
-		self.buttonchoices.append(wx.Button(panel, label="choise3", size=(250,40), pos=(20,170)))
-		self.buttonchoices.append(wx.Button(panel, label="choise4", size=(250,40), pos=(20,220)))
-		self.buttonchoices.append(wx.Button(panel, label="choise5", size=(250,40), pos=(280,70)))
-		self.buttonchoices.append(wx.Button(panel, label="choise6", size=(250,40), pos=(280,120)))
-		self.buttonchoices.append(wx.Button(panel, label="choise7", size=(250,40), pos=(280,170)))
-		self.buttonchoices.append(wx.Button(panel, label="choise8", size=(250,40), pos=(280,220)))
-
-		self.Bind(wx.EVT_BUTTON, self.OnChoiceButton0, self.buttonchoices[0])
-		self.Bind(wx.EVT_BUTTON, self.OnChoiceButton1, self.buttonchoices[1])
-		self.Bind(wx.EVT_BUTTON, self.OnChoiceButton2, self.buttonchoices[2])
-		self.Bind(wx.EVT_BUTTON, self.OnChoiceButton3, self.buttonchoices[3])
-		self.Bind(wx.EVT_BUTTON, self.OnChoiceButton4, self.buttonchoices[4])
-		self.Bind(wx.EVT_BUTTON, self.OnChoiceButton5, self.buttonchoices[5])
-		self.Bind(wx.EVT_BUTTON, self.OnChoiceButton6, self.buttonchoices[6])
-		self.Bind(wx.EVT_BUTTON, self.OnChoiceButton7, self.buttonchoices[7])
 		self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
 		self.Bind(wx.EVT_MENU, self.OnClose, exitmenuitem)
 		self.Bind(wx.EVT_MENU, self.OnOpen, openmenuitem)
 
 		self.words = None
-
-
-	def SetWord(self, word):
-		self.text_word.SetLabel(word)
-
-	def SetChoices(self, choices, answer):
-		self.answer = answer
-		self.answered = False
-		for i in range(0,8):
-			self.buttonchoices[i].SetLabel(choices[i])
-			self.buttonchoices[i].SetBackgroundColour("WHITE")
-			self.buttonchoices[i].SetForegroundColour("BLACK")
 
 	def OnOpen(self, event):
 		wildcard = 	"XML word list (*.xhtml)|*.xhtml|" \
@@ -89,8 +67,14 @@ class TrainingFrame(wx.Frame):
 			return
 
 		self.words = WordList(path)
-		self.words.NewWords(self, 8)
-			
+
+		# Only multiple choice for now
+		self.multiplechoice.SetWordList(self.words)
+		self.multiplechoice.PickNewWords()
+
+		self.main_panel.Hide()
+		self.multiplechoice.Show()
+		self.Layout()
 
 	def OnClose(self, event):
 		self.Close(True)
@@ -98,13 +82,56 @@ class TrainingFrame(wx.Frame):
 	def OnCloseWindow(self, event):
 		self.Destroy()
 
+class MultipleChoicePanel(wx.Panel):
+	def __init__(self, parent, ID):
+		wx.Panel.__init__(self, parent, ID)
+
+		self.text_word = wx.StaticText(self, label="word", pos=(40,30))
+
+		self.buttonchoices = []
+		self.buttonchoices.append(wx.Button(self, label="choice1", size=(250,40), pos=(20,70)))
+		self.buttonchoices.append(wx.Button(self, label="choice2", size=(250,40), pos=(20,120)))
+		self.buttonchoices.append(wx.Button(self, label="choice3", size=(250,40), pos=(20,170)))
+		self.buttonchoices.append(wx.Button(self, label="choice4", size=(250,40), pos=(20,220)))
+		self.buttonchoices.append(wx.Button(self, label="choice5", size=(250,40), pos=(280,70)))
+		self.buttonchoices.append(wx.Button(self, label="choice6", size=(250,40), pos=(280,120)))
+		self.buttonchoices.append(wx.Button(self, label="choice7", size=(250,40), pos=(280,170)))
+		self.buttonchoices.append(wx.Button(self, label="choice8", size=(250,40), pos=(280,220)))
+
+		self.Bind(wx.EVT_BUTTON, self.OnChoiceButton0, self.buttonchoices[0])
+		self.Bind(wx.EVT_BUTTON, self.OnChoiceButton1, self.buttonchoices[1])
+		self.Bind(wx.EVT_BUTTON, self.OnChoiceButton2, self.buttonchoices[2])
+		self.Bind(wx.EVT_BUTTON, self.OnChoiceButton3, self.buttonchoices[3])
+		self.Bind(wx.EVT_BUTTON, self.OnChoiceButton4, self.buttonchoices[4])
+		self.Bind(wx.EVT_BUTTON, self.OnChoiceButton5, self.buttonchoices[5])
+		self.Bind(wx.EVT_BUTTON, self.OnChoiceButton6, self.buttonchoices[6])
+		self.Bind(wx.EVT_BUTTON, self.OnChoiceButton7, self.buttonchoices[7])
+
+	def SetWordList(self, word_list):
+		self.word_list = word_list
+
+	def SetWord(self, word):
+		self.text_word.SetLabel(word)
+
+	def PickNewWords(self):
+		newchoices = self.word_list.NewMultipleChoiceWords(8)
+		self.SetChoices(newchoices[0], newchoices[1])
+		self.SetWord(newchoices[2])
+		self.answered = False
+
+	def SetChoices(self, choices, answer):
+		self.answer = answer
+		self.answered = False
+		for i in range(0,8):
+			self.buttonchoices[i].SetLabel(choices[i])
+			self.buttonchoices[i].SetBackgroundColour("WHITE")
+			self.buttonchoices[i].SetForegroundColour("BLACK")
+
 	def ChoiceButton(self, number):
-		if(self.words == None):
-			return
 
 		if(self.answered):
 			if(number == self.answer):
-				self.words.NewWords(self, 8)
+				self.PickNewWords()
 		else:
 			self.answered = True
 			for i in range(0,8):
@@ -138,7 +165,6 @@ class TrainingFrame(wx.Frame):
 
 	def OnChoiceButton7(self, event):
 		self.ChoiceButton(7)
-
 
 class WordList():
 	def __init__(self, path):
@@ -190,7 +216,7 @@ class WordList():
 
 		return True
 
-	def NewWords(self, frame, num_choices):
+	def NewMultipleChoiceWords(self, num_choices):
 
 		# Word to train
 		wordindex = random.randint(0,len(self.words)-1)
@@ -205,17 +231,15 @@ class WordList():
 		newwords = []
 		for wi in wordchoices:
 			newwords.append(self.words[wi][1])
-
 		
-		frame.SetWord(self.words[wordindex][0])
-		frame.SetChoices(newwords, i)
+		return (newwords, i, self.words[wordindex][0])
 
 if __name__ == "__main__":
 
 	app = wx.App()
 
 	win = TrainingFrame(None, wx.ID_ANY, "Title", size=(550, 320))
-	win.Show(True)
+	win.Show()
 
 	app.MainLoop()
 

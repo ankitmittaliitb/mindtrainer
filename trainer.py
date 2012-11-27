@@ -171,9 +171,9 @@ class SpellingPanel(wx.Panel):
 			if(not isinstance(self.word_to_spell, unicode)):
 				print "Error, word_to_spell is not unicode (%s is object %s)" % (self.word_to_spell, type(self.word_to_spell))
 			
-			if(text == u''):
+			if(self.word_to_spell.startswith(text)):
 				self.spelling_box.SetBackgroundColour("WHITE")
-			elif(self.word_to_spell.startswith(text)):
+			elif(self.word_to_spell == text):
 				self.spelling_box.SetBackgroundColour("GREEN")
 			else:
 				self.spelling_box.SetBackgroundColour("RED")

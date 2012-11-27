@@ -329,6 +329,10 @@ class WordList():
 
 		self.words = []
 		for row in csvobject:
+			word1 = row[0]
+			word2 = row[1]
+			word1 = word1.replace("&#39;", "'")
+			word2 = word2.replace("&#39;", "'")
 			self.words.append((row[0], row[1]))
 
 		return True

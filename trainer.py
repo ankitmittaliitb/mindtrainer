@@ -112,14 +112,44 @@ class TrainerPanel(wx.Panel):
 		button_mult_choice = wx.Button(self, label="Multiple choice", size=(150, 40), pos=(250, 190))
 		button_spelling = wx.Button(self, label="Spelling", size=(150, 40), pos=(250, 250))
 
-		cfg = wx.Config(APP_NAME)
+		self.cfg = wx.Config(APP_NAME)
 
-		self.wordlists = cfg.Read('wordlists').split('\t')
+		self.wordlists = self.cfg.Read('wordlists').split('\t')
 		for wl in self.wordlists:
 			self.wordlistlistbox.Append(os.path.basename(wl))
 
+		self.Bind(wx.EVT_BUTTON, self.OnAddWordList, button_add)
+		self.Bind(wx.EVT_BUTTON, self.OnRemoveWordList, button_rm)
 		self.Bind(wx.EVT_BUTTON, self.OnMultipleChoice, button_mult_choice)
 		self.Bind(wx.EVT_BUTTON, self.OnSpelling, button_spelling)
+
+	def OnAddWordList(self, event):
+		wildcard = 	"XML word list (*.xhtml)|*.xhtml|" \
+					"CSV word list (*.csv)|*.csv|" \
+					"All files (*.*)|*.*|"
+
+		dlg = wx.FileDialog(
+	            self, message="Choose a file",
+	            defaultDir=os.getcwd(), 
+	            defaultFile="",
+	            wildcard=wildcard,
+	            style=wx.OPEN | wx.CHANGE_DIR
+	            )
+
+		if(dlg.ShowModal() == wx.ID_OK):
+			path = dlg.GetPath()
+		else:
+			print("Canceled open file")
+			return
+
+		lists = self.cfg.Read('wordlists')
+		self.cfg.Write('wordlists', lists + '\t' + path)
+		self.wordlists.append(path)
+		self.wordlistlistbox.Append(os.path.basename(path))
+		
+
+	def OnRemoveWordList(self, event):
+		pass
 
 	def OnMultipleChoice(self, event):
 		wordlist = self.wordlists[self.wordlistlistbox.GetSelection()]

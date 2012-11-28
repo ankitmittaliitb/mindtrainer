@@ -114,14 +114,23 @@ class TrainerPanel(wx.Panel):
 
 		self.cfg = wx.Config(APP_NAME)
 
-		self.wordlists = self.cfg.Read('wordlists').split('\t')
-		for wl in self.wordlists:
-			self.wordlistlistbox.Append(os.path.basename(wl))
+		lists = self.cfg.Read('wordlists')
+		if(lists == ''):
+			self.wordlists = []
+		else:
+			self.wordlists = lists.split('\t')
+		self.UpdateListBox()
 
 		self.Bind(wx.EVT_BUTTON, self.OnAddWordList, button_add)
 		self.Bind(wx.EVT_BUTTON, self.OnRemoveWordList, button_rm)
 		self.Bind(wx.EVT_BUTTON, self.OnMultipleChoice, button_mult_choice)
 		self.Bind(wx.EVT_BUTTON, self.OnSpelling, button_spelling)
+
+	def UpdateListBox(self):
+		self.wordlistlistbox.Clear()
+		
+		for wl in self.wordlists:
+			self.wordlistlistbox.Append(os.path.basename(wl))
 
 	def OnAddWordList(self, event):
 		wildcard = 	"XML word list (*.xhtml)|*.xhtml|" \
@@ -143,18 +152,31 @@ class TrainerPanel(wx.Panel):
 			return
 
 		lists = self.cfg.Read('wordlists')
-		self.cfg.Write('wordlists', lists + '\t' + path)
+		if(lists != ''):
+			self.cfg.Write('wordlists', lists + '\t' + path)
+		else:
+			self.cfg.Write('wordlists', path)
 		self.wordlists.append(path)
-		self.wordlistlistbox.Append(os.path.basename(path))
+		self.UpdateListBox()
 		
 
 	def OnRemoveWordList(self, event):
-		pass
+		listi = self.wordlistlistbox.GetSelection()
+
+		if(listi == wx.NOT_FOUND):
+			return
+
+		self.wordlists.pop(listi)
+		self.UpdateListBox()
+		
 
 	def OnMultipleChoice(self, event):
-		wordlist = self.wordlists[self.wordlistlistbox.GetSelection()]
-		if(wordlist == wx.NOT_FOUND):
+		listi = self.wordlistlistbox.GetSelection()
+
+		if(listi == wx.NOT_FOUND):
 			return
+
+		wordlist = self.wordlists[listi]
 		self.GetParent().LoadWordList(wordlist)
 		self.GetParent().StartMultipleChoice()
 

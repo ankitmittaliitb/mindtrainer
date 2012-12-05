@@ -254,6 +254,10 @@ class MultipleChoicePanel(wx.Panel):
 		stopbutton = wx.Button(self, label="Stop", size=(100,30), pos=(280, 20))
 		self.Bind(wx.EVT_BUTTON, self.OnStop, stopbutton)
 
+		font = self.text_word.GetFont()
+		font.SetPointSize(14)
+		self.text_word.SetFont(font)
+
 		self.buttonchoices = []
 		self.buttonchoices.append(wx.Button(self, label="choice1", size=(250,40), pos=(20,70)))
 		self.buttonchoices.append(wx.Button(self, label="choice2", size=(250,40), pos=(20,120)))

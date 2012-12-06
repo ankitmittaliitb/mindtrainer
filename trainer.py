@@ -72,6 +72,7 @@ class TrainingFrame(wx.Frame):
 
 	def LoadWordList(self, path):
 		self.words = WordList(path)
+		return self.words
 
 	def Stop(self):
 		self.trainerpanel.Show()
@@ -79,7 +80,8 @@ class TrainingFrame(wx.Frame):
 		self.spelling.Hide()
 		self.Layout()
 
-	def StartMultipleChoice(self):
+	def StartMultipleChoice(self, trainlist):
+		self.words.SetTrainList(trainlist)
 		self.multiplechoice.SetWordList(self.words)
 		self.multiplechoice.PickNewWords()
 
@@ -87,7 +89,8 @@ class TrainingFrame(wx.Frame):
 		self.multiplechoice.Show()
 		self.Layout()
 
-	def StartSpelling(self):
+	def StartSpelling(self, trainlist):
+		self.words.SetTrainList(trainlist)
 		self.spelling.SetWordList(self.words)
 		self.spelling.PickNewWord()
 
@@ -125,6 +128,7 @@ class TrainerPanel(wx.Panel):
 		self.Bind(wx.EVT_BUTTON, self.OnRemoveWordList, button_rm)
 		self.Bind(wx.EVT_BUTTON, self.OnMultipleChoice, button_mult_choice)
 		self.Bind(wx.EVT_BUTTON, self.OnSpelling, button_spelling)
+		self.Bind(wx.EVT_LISTBOX, self.OnWordListListBox, self.wordlistlistbox)
 
 	def UpdateListBox(self):
 		self.wordlistlistbox.Clear()
@@ -169,23 +173,26 @@ class TrainerPanel(wx.Panel):
 		self.wordlists.pop(listi)
 		self.UpdateListBox()
 		
+	def OnWordListListBox(self, event):
+		# Load wordlist update choices
+		listi = self.wordlistlistbox.GetSelection()
+		wordlist = self.wordlists[listi]
+		self.wordlist = self.GetParent().LoadWordList(wordlist)
 
 	def OnMultipleChoice(self, event):
-		listi = self.wordlistlistbox.GetSelection()
+		trainlist = []
+		for i in range(0, self.wordlist.Length()):
+			trainlist += [[i,1]]
 
-		if(listi == wx.NOT_FOUND):
-			return
-
-		wordlist = self.wordlists[listi]
-		self.GetParent().LoadWordList(wordlist)
-		self.GetParent().StartMultipleChoice()
+		self.GetParent().StartMultipleChoice(trainlist)
 
 	def OnSpelling(self, event):
-		wordlist = self.wordlists[self.wordlistlistbox.GetSelection()]
-		if(wordlist == wx.NOT_FOUND):
-			return
-		self.GetParent().LoadWordList(wordlist)
-		self.GetParent().StartSpelling()
+		trainlist = []
+		for i in range(0, self.wordlist.Length()):
+			trainlist += [[i,1]]
+
+		self.GetParent().StartSpelling(trainlist)
+
 
 class SpellingPanel(wx.Panel):
 	def __init__(self, parent, ID):
@@ -206,6 +213,11 @@ class SpellingPanel(wx.Panel):
 	def PickNewWord(self):
 		self.checked = False
 		new_word = self.word_list.NewWord()
+
+		if(new_word == None):
+			self.GetParent().Stop()
+			return
+
 		self.correct_text_word.SetLabel('')
 		self.spelling_box.SetValue('')
 		self.spelling_box.SetBackgroundColour("WHITE")
@@ -285,6 +297,11 @@ class MultipleChoicePanel(wx.Panel):
 
 	def PickNewWords(self):
 		newchoices = self.word_list.NewMultipleChoiceWords(8)
+
+		if(newchoices == None):
+			self.GetParent().Stop()
+			return
+
 		self.SetChoices(newchoices[0], newchoices[1])
 		self.SetWord(newchoices[2])
 		self.answered = False
@@ -393,14 +410,36 @@ class WordList():
 
 		return True
 
+	def SetTrainList(self, trainlist):
+		# Trainlist is a list of [wordindex, ntimestotrain]
+		self.trainlist = trainlist
+
 	def NewWord(self):
-		wordindex = random.randint(0, len(self.words)-1)
-		return (self.words[wordindex][0],self.words[wordindex][1])
+		nwords = len(self.trainlist) - self.trainlist.count(0)
+		if(nwords == 0):
+			return None
+
+		index = random.randint(0, nwords-1)
+		wordindex = self.trainlist[index][0]
+
+		self.trainlist[index][1] -= 1
+		if(self.trainlist[index][1] == 0):
+			self.trainlist.pop(index)
+		
+		return wordindex
+
+	def NewSpellWord(self):
+		wordindex = self.NewWord()
+		if(wordindex == None):
+			return None
+
+		return (self.words[wordindex][0], self.words[wordindex][1])
 
 	def NewMultipleChoiceWords(self, num_choices):
 
-		# Word to train
-		wordindex = random.randint(0,len(self.words)-1)
+		wordindex = self.NewWord()
+		if(wordindex == None):
+			return None
 
 		indexarray = range(len(self.words))
 		indexarray.pop(wordindex)
@@ -414,6 +453,9 @@ class WordList():
 			newwords.append(self.words[wi][1])
 		
 		return (newwords, i, self.words[wordindex][0])
+
+	def Length(self):
+		return len(self.words)
 
 if __name__ == "__main__":
 

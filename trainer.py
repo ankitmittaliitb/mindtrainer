@@ -212,7 +212,7 @@ class SpellingPanel(wx.Panel):
 
 	def PickNewWord(self):
 		self.checked = False
-		new_word = self.word_list.NewWord()
+		new_word = self.word_list.NewSpellWord()
 
 		if(new_word == None):
 			self.GetParent().Stop()

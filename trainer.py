@@ -201,6 +201,7 @@ class SpellingPanel(wx.Panel):
 		self.text_word = wx.StaticText(self, label="word", pos=(40,30))
 		self.correct_text_word = wx.StaticText(self, label="", pos=(40,60))
 		stopbutton = wx.Button(self, label="Stop", size=(100,30), pos=(280, 20))
+		self.word_counter = wx.StaticText(self, label="(0/0)", pos = (400, 30))
 		self.spelling_box = wx.TextCtrl(self, wx.ID_ANY, size=(200, 30), pos=(30,100))
 
 		self.Bind(wx.EVT_BUTTON, self.OnStop, stopbutton)
@@ -209,6 +210,9 @@ class SpellingPanel(wx.Panel):
 
 	def SetWordList(self, word_list):
 		self.word_list = word_list
+		self.num_answers = 0
+		self.total_answers = self.word_list.TrainLength()
+		self.word_counter.SetLabel('(%d/%d)' % (self.num_answers, self.total_answers)) 
 
 	def PickNewWord(self):
 		self.checked = False
@@ -246,6 +250,8 @@ class SpellingPanel(wx.Panel):
 		if(event.GetKeyCode() == 13):
 			if(not self.checked):
 				self.checked = True
+				self.num_answers += 1
+				self.word_counter.SetLabel('(%d/%d)' % (self.num_answers, self.total_answers))
 				if(self.spelling_box.GetValue() == self.word_to_spell):
 					self.spelling_box.SetBackgroundColour("GREEN")
 				else:
@@ -264,6 +270,7 @@ class MultipleChoicePanel(wx.Panel):
 
 		self.text_word = wx.StaticText(self, label="word", pos=(40,30))
 		stopbutton = wx.Button(self, label="Stop", size=(100,30), pos=(280, 20))
+		self.word_counter = wx.StaticText(self, label="(0/0)", pos = (400, 30))
 		self.Bind(wx.EVT_BUTTON, self.OnStop, stopbutton)
 
 		font = self.text_word.GetFont()
@@ -291,6 +298,9 @@ class MultipleChoicePanel(wx.Panel):
 
 	def SetWordList(self, word_list):
 		self.word_list = word_list
+		self.num_answers = 0
+		self.total_answers = self.word_list.TrainLength()
+		self.word_counter.SetLabel('(%d/%d)' % (self.num_answers, self.total_answers))
 
 	def SetWord(self, word):
 		self.text_word.SetLabel(word)
@@ -324,6 +334,8 @@ class MultipleChoicePanel(wx.Panel):
 				self.PickNewWords()
 		else:
 			self.answered = True
+			self.num_answers += 1
+			self.word_counter.SetLabel('(%d/%d)' % (self.num_answers, self.total_answers))
 			for i in range(0,8):
 				if(i != self.answer):
 					self.buttonchoices[i].SetForegroundColour("GREY")
@@ -456,6 +468,12 @@ class WordList():
 
 	def Length(self):
 		return len(self.words)
+
+	def TrainLength(self):
+		s = 0
+		for i in self.trainlist:
+			s += i[1]
+		return s
 
 if __name__ == "__main__":
 

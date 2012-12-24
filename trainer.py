@@ -80,8 +80,9 @@ class TrainingFrame(wx.Frame):
 		self.spelling.Hide()
 		self.Layout()
 
-	def StartMultipleChoice(self, trainlist):
+	def StartMultipleChoice(self, trainlist, all_correct):
 		self.words.SetTrainList(trainlist)
+		self.words.SetAllCorrect(all_correct)
 		self.multiplechoice.SetWordList(self.words)
 		self.multiplechoice.PickNewWords()
 
@@ -89,8 +90,9 @@ class TrainingFrame(wx.Frame):
 		self.multiplechoice.Show()
 		self.Layout()
 
-	def StartSpelling(self, trainlist):
+	def StartSpelling(self, trainlist, all_correct):
 		self.words.SetTrainList(trainlist)
+		self.words.SetAllCorrect(all_correct)
 		self.spelling.SetWordList(self.words)
 		self.spelling.PickNewWord()
 
@@ -114,6 +116,7 @@ class TrainerPanel(wx.Panel):
 		button_rm = wx.Button(self, label="Remove word list", size=(150, 40), pos=(250, 130))
 		button_mult_choice = wx.Button(self, label="Multiple choice", size=(150, 40), pos=(250, 190))
 		button_spelling = wx.Button(self, label="Spelling", size=(150, 40), pos=(250, 250))
+		self.checkbox_allcorrect = wx.CheckBox(self, label="All correct", pos=(420, 260))
 
 		self.cfg = wx.Config(APP_NAME)
 
@@ -184,14 +187,14 @@ class TrainerPanel(wx.Panel):
 		for i in range(0, self.wordlist.Length()):
 			trainlist += [[i,1]]
 
-		self.GetParent().StartMultipleChoice(trainlist)
+		self.GetParent().StartMultipleChoice(trainlist, self.checkbox_allcorrect.GetValue())
 
 	def OnSpelling(self, event):
 		trainlist = []
 		for i in range(0, self.wordlist.Length()):
 			trainlist += [[i,1]]
 
-		self.GetParent().StartSpelling(trainlist)
+		self.GetParent().StartSpelling(trainlist, self.checkbox_allcorrect.GetValue())
 
 
 class SpellingPanel(wx.Panel):

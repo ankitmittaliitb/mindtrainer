@@ -210,9 +210,8 @@ class SpellingPanel(wx.Panel):
 
 	def SetWordList(self, word_list):
 		self.word_list = word_list
-		self.num_answers = 0
 		self.total_answers = self.word_list.TrainLength()
-		self.word_counter.SetLabel('(%d/%d)' % (self.num_answers, self.total_answers)) 
+		self.word_counter.SetLabel('(%d/%d)' % (0, self.total_answers)) 
 
 	def PickNewWord(self):
 		self.checked = False
@@ -250,14 +249,16 @@ class SpellingPanel(wx.Panel):
 		if(event.GetKeyCode() == 13):
 			if(not self.checked):
 				self.checked = True
-				self.num_answers += 1
-				self.word_counter.SetLabel('(%d/%d)' % (self.num_answers, self.total_answers))
 				if(self.spelling_box.GetValue() == self.word_to_spell):
 					self.spelling_box.SetBackgroundColour("GREEN")
+					self.word_list.CurrentWordAnswer(True)
 				else:
 					self.spelling_box.SetValue('')
 					self.spelling_box.SetBackgroundColour("RED")
 					self.correct_text_word.SetLabel(self.word_to_spell)
+					self.word_list.CurrentWordAnswer(False)
+
+				self.word_counter.SetLabel('(%d/%d)' % (self.total_answers - self.word_list.TrainLength(), self.total_answers))
 			else:
 				text = self.spelling_box.GetValue()
 				if(text == u'' or text == self.word_to_spell):
@@ -298,9 +299,8 @@ class MultipleChoicePanel(wx.Panel):
 
 	def SetWordList(self, word_list):
 		self.word_list = word_list
-		self.num_answers = 0
 		self.total_answers = self.word_list.TrainLength()
-		self.word_counter.SetLabel('(%d/%d)' % (self.num_answers, self.total_answers))
+		self.word_counter.SetLabel('(%d/%d)' % (0, self.total_answers))
 
 	def SetWord(self, word):
 		self.text_word.SetLabel(word)
@@ -334,8 +334,6 @@ class MultipleChoicePanel(wx.Panel):
 				self.PickNewWords()
 		else:
 			self.answered = True
-			self.num_answers += 1
-			self.word_counter.SetLabel('(%d/%d)' % (self.num_answers, self.total_answers))
 			for i in range(0,8):
 				if(i != self.answer):
 					self.buttonchoices[i].SetForegroundColour("GREY")
@@ -343,6 +341,9 @@ class MultipleChoicePanel(wx.Panel):
 						self.buttonchoices[i].SetBackgroundColour("RED")
 				else:
 					self.buttonchoices[i].SetBackgroundColour("GREEN")
+
+			self.word_list.CurrentWordAnswer(self.answer == number)
+			self.word_counter.SetLabel('(%d/%d)' % (self.total_answers - self.word_list.TrainLength(), self.total_answers))
 
 	def OnChoiceButton0(self, event):
 		self.ChoiceButton(0)

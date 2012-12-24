@@ -479,7 +479,7 @@ if __name__ == "__main__":
 
 	app = wx.App()
 
-	win = TrainingFrame(None, wx.ID_ANY, "Title", size=(550, 320))
+	win = TrainingFrame(None, wx.ID_ANY, "Title", size=(620, 350))
 	win.Show()
 
 	app.MainLoop()

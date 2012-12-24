@@ -372,6 +372,8 @@ class WordList():
 	def __init__(self, path):
 		random.seed()
 
+		self.all_correct = False
+
 		# Try as XML first, then as CSV, otherwise (throw error?)
 		if(self.LoadXML(path)):
 			return
@@ -426,6 +428,9 @@ class WordList():
 		# Trainlist is a list of [wordindex, ntimestotrain]
 		self.trainlist = trainlist
 
+	def SetAllCorrect(self, all_correct):
+		self.all_correct = all_correct
+
 	def NewWord(self):
 		nwords = len(self.trainlist) - self.trainlist.count(0)
 		if(nwords == 0):
@@ -434,11 +439,15 @@ class WordList():
 		index = random.randint(0, nwords-1)
 		wordindex = self.trainlist[index][0]
 
-		self.trainlist[index][1] -= 1
-		if(self.trainlist[index][1] == 0):
-			self.trainlist.pop(index)
+		self.current_wordindex = wordindex
 		
 		return wordindex
+
+	def CurrentWordAnswer(self, word_correct):
+		if((self.all_correct == True and word_correct) or self.all_correct == False):
+			self.trainlist[self.current_wordindex][1] -= 1
+			if(self.trainlist[self.current_wordindex][1] == 0):
+				self.trainlist.pop(self.current_wordindex)
 
 	def NewSpellWord(self):
 		wordindex = self.NewWord()

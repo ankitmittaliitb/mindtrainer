@@ -443,7 +443,8 @@ class WordList():
 		index = random.randint(0, nwords-1)
 		wordindex = self.trainlist[index][0]
 
-		self.current_wordindex = wordindex
+		# Save index into trainlist of current word
+		self.current_wordindex = index
 		
 		return wordindex
 

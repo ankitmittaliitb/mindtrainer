@@ -7,6 +7,7 @@
 import sys
 import os
 import wx
+import wx.media
 import random
 import xml.dom.minidom
 import csv
@@ -25,11 +26,14 @@ class TrainingFrame(wx.Frame):
 		self.multiplechoice.Hide()
 		self.spelling = SpellingPanel(self, wx.ID_ANY)
 		self.spelling.Hide()
+		self.showwords = ShowWordsPanel(self, wx.ID_ANY)
+		self.showwords.Hide()
 
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		self.sizer.Add(self.trainerpanel, 1, wx.EXPAND)
 		self.sizer.Add(self.multiplechoice, 1, wx.EXPAND)
 		self.sizer.Add(self.spelling, 1, wx.EXPAND)
+		self.sizer.Add(self.showwords, 1, wx.EXPAND)
 		self.SetSizer(self.sizer)
 
 		# Menu
@@ -78,6 +82,7 @@ class TrainingFrame(wx.Frame):
 		self.trainerpanel.Show()
 		self.multiplechoice.Hide()
 		self.spelling.Hide()
+		self.showwords.Hide()
 		self.Layout()
 
 	def StartMultipleChoice(self, trainlist, all_correct):
@@ -100,11 +105,22 @@ class TrainingFrame(wx.Frame):
 		self.spelling.Show()
 		self.Layout()
 
+	def StartShowWords(self, trainlist, all_correct):
+		self.words.SetTrainList(trainlist)
+		self.words.SetAllCorrect(all_correct)
+		self.showwords.SetWordList(self.words)
+		self.showwords.PickNewWord()
+
+		self.trainerpanel.Hide()
+		self.showwords.Show()
+		self.Layout()
+
 	def OnClose(self, event):
 		self.Close(True)
 
 	def OnCloseWindow(self, event):
 		self.Destroy()
+
 
 class TrainerPanel(wx.Panel):
 	def __init__(self, parent, ID):
@@ -116,6 +132,7 @@ class TrainerPanel(wx.Panel):
 		button_rm = wx.Button(self, label="Remove word list", size=(150, 40), pos=(250, 130))
 		button_mult_choice = wx.Button(self, label="Multiple choice", size=(150, 40), pos=(250, 190))
 		button_spelling = wx.Button(self, label="Spelling", size=(150, 40), pos=(250, 250))
+		button_showwords = wx.Button(self, label="Show words", size=(150,40), pos=(430, 190))
 		self.checkbox_allcorrect = wx.CheckBox(self, label="All correct", pos=(420, 260))
 
 		self.cfg = wx.Config(APP_NAME)
@@ -131,6 +148,7 @@ class TrainerPanel(wx.Panel):
 		self.Bind(wx.EVT_BUTTON, self.OnRemoveWordList, button_rm)
 		self.Bind(wx.EVT_BUTTON, self.OnMultipleChoice, button_mult_choice)
 		self.Bind(wx.EVT_BUTTON, self.OnSpelling, button_spelling)
+		self.Bind(wx.EVT_BUTTON, self.OnShowWords, button_showwords)
 		self.Bind(wx.EVT_LISTBOX, self.OnWordListListBox, self.wordlistlistbox)
 
 	def UpdateListBox(self):
@@ -195,6 +213,13 @@ class TrainerPanel(wx.Panel):
 			trainlist += [[i,1]]
 
 		self.GetParent().StartSpelling(trainlist, self.checkbox_allcorrect.GetValue())
+
+	def OnShowWords(self, event):
+		trainlist = []
+		for i in range(0, self.wordlist.Length()):
+			trainlist += [[i,1]]
+
+		self.GetParent().StartShowWords(trainlist, self.checkbox_allcorrect.GetValue())
 
 
 class SpellingPanel(wx.Panel):
@@ -267,6 +292,7 @@ class SpellingPanel(wx.Panel):
 				if(text == u'' or text == self.word_to_spell):
 					self.PickNewWord()
 		event.Skip()
+
 
 class MultipleChoicePanel(wx.Panel):
 	def __init__(self, parent, ID):
@@ -371,6 +397,73 @@ class MultipleChoicePanel(wx.Panel):
 
 	def OnChoiceButton7(self, event):
 		self.ChoiceButton(7)
+
+
+class ShowWordsPanel(wx.Panel):
+	def __init__(self, parent, ID):
+		wx.Panel.__init__(self, parent, ID)
+
+		self.text_word = wx.StaticText(self, label="word", pos=(40,30))
+		self.text_word2 = wx.StaticText(self, label="word", pos=(40,60))
+		button_nextword =  wx.Button(self, label="Next word", size=(250,40), pos=(20,100))
+		button_playsound = wx.Button(self, label="Play sound", size=(100,30), pos=(20, 150))
+		stopbutton = wx.Button(self, label="Stop", size=(100,30), pos=(280, 20))
+		self.word_counter = wx.StaticText(self, label="(0/0)", pos = (400, 30))
+		self.Bind(wx.EVT_BUTTON, self.OnStop, stopbutton)
+
+		font = self.text_word.GetFont()
+		font.SetPointSize(14)
+		self.text_word.SetFont(font)
+
+		self.Bind(wx.EVT_BUTTON, self.OnNextWord, button_nextword)
+		self.Bind(wx.EVT_BUTTON, self.OnPlaySound, button_playsound)
+
+		try:
+			self.mediacontroller = wx.media.MediaCtrl(self)
+		except:
+			print "Couldn't create media controller"
+
+	def SetWordList(self, word_list):
+		self.word_list = word_list
+		self.total_answers = self.word_list.TrainLength()
+		self.word_counter.SetLabel('(%d/%d)' % (0, self.total_answers))
+
+	def PickNewWord(self):
+		new_word = self.word_list.NewSpellWord()
+
+		if(new_word == None):
+			self.GetParent().Stop()
+			return
+
+		self.word = new_word[0].decode('utf8')
+		self.word2 = new_word[1].decode('utf8')
+		self.text_word.SetLabel(self.word)
+		self.text_word2.SetLabel(self.word2)
+
+		self.word_list.CurrentWordAnswer(True)
+		self.word_counter.SetLabel('(%d/%d)' % (self.total_answers - self.word_list.TrainLength(), self.total_answers))
+
+		self.PlayCurrentWord()
+
+	def PlayCurrentWord(self):
+		word = self.word.replace("!", "")
+		path = os.path.abspath('audio/' + word + '.mp3')
+
+		if(os.path.isfile(path)):
+			if(not self.mediacontroller.Load(path)):
+				print "Couldn't load media file " + path
+			if(not self.mediacontroller.Play()):
+				print "Couldn't play media file " + path
+
+	def OnStop(self, event):
+		self.GetParent().Stop()
+
+	def OnNextWord(self, event):
+		self.PickNewWord()
+
+	def OnPlaySound(self, event):
+		self.PlayCurrentWord()
+
 
 class WordList():
 	def __init__(self, path):
